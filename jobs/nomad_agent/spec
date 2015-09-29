@@ -1,0 +1,120 @@
+---
+name: nomad_agent
+
+packages:
+  - bosh-helpers
+  - nomad
+
+templates:
+  bin/job_properties.sh.erb: bin/job_properties.sh
+  bin/nomad_agent_ctl.erb: bin/nomad_agent_ctl
+  bin/nomad_server_join_ctl.erb: bin/nomad_server_join_ctl
+  config/nomad_agent.hcl.erb: config/nomad_agent.hcl
+
+properties:
+  nomad_agent.user:
+    description: "User which will own the Nomad Agent services"
+    default: "root"
+  nomad_agent.group:
+    description: "Group which will own the Nomad Agent services"
+    default: "vcap"
+
+  nomad_agent.mode:
+    description: "The Nomad Agent mode (server or client)"
+
+  nomad_agent.bind_addr:
+    description: "The address the agent will bind to for all of its various network services"
+    default: "0.0.0.0"
+  nomad_agent.datacenter:
+    description: "The name of the datacenter this Nomad agent is a member of"
+    default: "dc1"
+  nomad_agent.disable_anonymous_signature:
+    description: "Disables providing an anonymous signature for de-duplication with the update check"
+    default: false
+  nomad_agent.disable_update_check:
+    description: "Disables automatic checking for security bulletins and new version releases"
+    default: false
+  nomad_agent.enable_debug:
+    description: "Enables the debugging HTTP endpoints"
+    default: false
+  nomad_agent.enable_syslog:
+    description: "Enables logging to syslog"
+    default: false
+  nomad_agent.name:
+    description: "The name of the local agent"
+  nomad_agent.leave_on_interrupt:
+    description: "Enables gracefully leave when receiving the interrupt signal"
+    default: false
+  nomad_agent.leave_on_terminate:
+    description: "Enables gracefully leave when receiving the terminate signal"
+    default: false
+  nomad_agent.log_level:
+    description: "Specify the verbosity level of Nomad's logs (DEBUG, INFO, WARN)"
+    default: "DEBUG"
+  nomad_agent.region:
+    description: "Name of the region the Nomad agent will be a member of"
+    default: "global"
+  nomad_agent.syslog_facility:
+    description: "Controls the syslog facility that is used"
+    default: "LOCAL0"
+  nomad_agent.servers:
+    description: "An array of server addresses"
+    default: []
+
+  nomad_agent.addresses.http:
+    description: "The address the HTTP server is bound to"
+  nomad_agent.addresses.rpc:
+    description: "The address to bind the internal RPC interfaces to"
+  nomad_agent.addresses.serf:
+    description: "The address used to bind the gossip layer to"
+
+  nomad_agent.advertise.rpc:
+    description: "The address to advertise for the RPC interface"
+  nomad_agent.advertise.serf:
+    description: "The address used advertise for the gossip layer"
+
+  nomad_agent.atlas.infrastructure:
+    description: "The Atlas infrastructure name to connect this agent to"
+  nomad_agent.atlas.token:
+    description: "The Atlas token to use for authentication"
+  nomad_agent.atlas.join:
+    description: "A boolean indicating if the auto-join feature of Atlas should be enabled"
+    default: false
+  nomad_agent.atlas.endpoint:
+    description: "The address of the Atlas instance to connect to"
+
+  nomad_agent.client.node_id:
+    description: "This is the value used to uniquely identify the local agent's node registration with the servers"
+  nomad_agent.client.node_class:
+    description: "A string used to logically group client nodes by class"
+  nomad_agent.client.meta:
+    description: "This is a key/value mapping of metadata pairs"
+    default: {}
+
+  nomad_agent.ports.http:
+    description: "The port used to run the HTTP server"
+    default: 4646
+  nomad_agent.ports.rpc:
+    description: "The port used for internal RPC communication between agents and servers"
+    default: 4647
+  nomad_agent.ports.serf:
+    description: "The port used for the gossip protocol for cluster membership"
+    default: 4648
+
+  nomad_agent.server.bootstrap_expect:
+    description: "Configures the expected number of servers nodes to wait for before bootstrapping the cluster"
+    default: 1
+  nomad_agent.server.num_schedulers:
+    description: "The number of parallel scheduler threads to run"
+    default: 4
+  nomad_agent.server.enabled_schedulers:
+    description: "This is an array of strings indicating which sub-schedulers this server will handle"
+    default: []
+
+  nomad_agent.telemetry.statsite_address:
+    description: "Address of a statsite server to forward metrics data to"
+  nomad_agent.telemetry.statsd_address:
+    description: "Address of a statsd server to forward metrics to"
+  nomad_agent.telemetry.disable_hostname:
+    description: "A boolean indicating if gauge values should not be prefixed with the local hostname"
+    default: true

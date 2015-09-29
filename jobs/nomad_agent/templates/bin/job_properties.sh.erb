@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+#
+# Nomad Agent properties
+#
+
+# Directory to store the Nomad Agent configuration files
+export NOMAD_AGENT_CONF_DIR=${JOB_DIR}/config
+
+# Directory to store the Nomad Agent log files
+export NOMAD_AGENT_LOG_DIR=${LOG_DIR}
+
+# Directory to store the Nomad Agent process IDs
+export NOMAD_AGENT_PID_DIR=${RUN_DIR}
+
+# Directory to store the Nomad Agent data files
+export NOMAD_AGENT_STORE_DIR=${STORE_DIR}
+
+# Directory to store the Nomad Agent temp files
+export NOMAD_AGENT_TMP_DIR=${TMP_DIR}
+
+# User which will own the Nomad Agent services
+export NOMAD_AGENT_USER="<%= p('nomad_agent.user') %>"
+
+# Group which will own the Nomad Agent services
+export NOMAD_AGENT_GROUP="<%= p('nomad_agent.group') %>"
+
+# The port used to run the HTTP server
+export NOMAD_AGENT_HTTP_PORT="<%= p('nomad_agent.ports.http') %>"
+
+# Nomad Agent Servers to join
+export NOMAD_AGENT_JOIN_SERVERS="<%= p('nomad_agent.servers').map { |server| "#{server}:#{p('nomad_agent.ports.serf')}" }.join(' ') %>"

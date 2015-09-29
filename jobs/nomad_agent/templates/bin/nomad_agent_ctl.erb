@@ -1,0 +1,40 @@
+#!/bin/bash
+
+set -e # exit immediately if a simple command exits with a non-zero status
+
+# Setup common env vars and folders
+source /var/vcap/packages/bosh-helpers/ctl_setup.sh 'nomad_agent'
+export NOMAD_AGENT_PID_FILE=${NOMAD_AGENT_PID_DIR}/nomad_agent.pid
+
+case $1 in
+
+  start)
+    pid_guard ${NOMAD_AGENT_PID_FILE} ${JOB_NAME}
+    echo $$ > ${NOMAD_AGENT_PID_FILE}
+
+    # Create Nomad Agent user & group
+    create_group ${NOMAD_AGENT_GROUP}
+    create_user ${NOMAD_AGENT_USER} ${NOMAD_SERVER_GROUP}
+
+    # Set permissons to the store directory
+    chown -R ${NOMAD_AGENT_USER}:${NOMAD_AGENT_GROUP} ${NOMAD_AGENT_STORE_DIR}
+
+    # Start Nomad Agent service
+    exec chpst -u ${NOMAD_AGENT_USER}:${NOMAD_AGENT_GROUP} nomad agent \
+      -config="${NOMAD_AGENT_CONF_DIR}/nomad_agent.hcl" \
+      >>${NOMAD_AGENT_LOG_DIR}/${OUTPUT_LABEL}.stdout.log \
+      2>>${NOMAD_AGENT_LOG_DIR}/${OUTPUT_LABEL}.stderr.log
+    ;;
+
+  stop)
+    # Stop Nomad Agent service
+    kill_and_wait ${NOMAD_AGENT_PID_FILE}
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop}"
+    exit 1
+    ;;
+
+esac
+exit 0

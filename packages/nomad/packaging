@@ -1,0 +1,17 @@
+set -e # exit immediately if a simple command exits with a non-zero status
+set -u # report the usage of uninitialized variables
+
+# Detect # of CPUs so make jobs can be parallelized
+CPUS=`grep -c ^processor /proc/cpuinfo`
+
+# We grab the latest versions that are in the directory
+NOMAD_VERSION=`ls -r nomad/nomad_*_linux_amd64.zip | sed 's/nomad\/nomad_\(.*\)_linux_amd64\.zip/\1/' | head -1`
+
+# Extract Nomad package
+echo "Extracting Nomad ${NOMAD_VERSION}..."
+mkdir -p ${BOSH_INSTALL_TARGET}/bin
+unzip ${BOSH_COMPILE_TARGET}/nomad/nomad_${NOMAD_VERSION}_linux_amd64.zip -d ${BOSH_INSTALL_TARGET}/bin
+if [[ $? != 0 ]] ; then
+  echo "Failed extracting Nomad ${NOMAD_VERSION}"
+  exit 1
+fi

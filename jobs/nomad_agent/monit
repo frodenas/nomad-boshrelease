@@ -1,0 +1,13 @@
+check process nomad_agent
+  with pidfile /var/vcap/sys/run/nomad_agent/nomad_agent.pid
+  start program "/var/vcap/packages/bosh-helpers/monit_debugger nomad_agent_ctl '/var/vcap/jobs/nomad_agent/bin/nomad_agent_ctl start'"
+  stop program "/var/vcap/packages/bosh-helpers/monit_debugger nomad_agent_ctl '/var/vcap/jobs/nomad_agent/bin/nomad_agent_ctl stop'"
+  group vcap
+
+<% if p('nomad_agent.mode') == 'server' %>
+check file nomad_server_join
+  with path /var/vcap/sys/run/nomad_agent/nomad_server_join.check
+  start program "/var/vcap/packages/bosh-helpers/monit_debugger nomad_server_join_ctl '/var/vcap/jobs/nomad_agent/bin/nomad_server_join_ctl start'"
+  stop program "/var/vcap/packages/bosh-helpers/monit_debugger nomad_server_join_ctl '/var/vcap/jobs/nomad_agent/bin/nomad_server_join_ctl stop'"
+  group vcap
+<% end %>

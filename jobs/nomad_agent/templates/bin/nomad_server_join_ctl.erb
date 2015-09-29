@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -e # exit immediately if a simple command exits with a non-zero status
+
+# Setup common env vars and folders
+source /var/vcap/packages/bosh-helpers/ctl_setup.sh 'nomad_agent' 'nomad_server_join'
+
+case $1 in
+
+  start)
+    # Create Nomad Agent user & group
+    create_group ${NOMAD_AGENT_GROUP}
+    create_user ${NOMAD_AGENT_USER} ${NOMAD_SERVER_GROUP}
+
+    # Join the local Nomad Agent Server to the cluster
+    chpst -u ${NOMAD_AGENT_USER}:${NOMAD_AGENT_GROUP} nomad server-join \
+      -address="http://127.0.0.1:${NOMAD_AGENT_HTTP_PORT}" \
+      ${NOMAD_AGENT_JOIN_SERVERS} \
+      >>${NOMAD_AGENT_LOG_DIR}/${OUTPUT_LABEL}.stdout.log \
+      2>>${NOMAD_AGENT_LOG_DIR}/${OUTPUT_LABEL}.stderr.log
+
+    # Create check file
+    touch ${NOMAD_AGENT_PID_DIR}/nomad_server_join.check
+    ;;
+
+  stop)
+    # Remove check file
+    rm ${NOMAD_AGENT_PID_DIR}/nomad_server_join.check
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop}"
+    exit 1
+    ;;
+
+esac
+exit 0

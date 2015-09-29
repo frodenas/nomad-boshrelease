@@ -1,0 +1,154 @@
+# The address the agent will bind to for all of its various network services
+bind_addr = "<%= p('nomad_agent.bind_addr') %>"
+
+# Data directory
+data_dir = "/var/vcap/store/nomad_agent"
+
+# The name of the datacenter this Nomad agent is a member of
+datacenter = "<%= p('nomad_agent.datacenter') %>"
+
+# Disables providing an anonymous signature for de-duplication with the update check
+disable_anonymous_signature = <%= p('nomad_agent.disable_anonymous_signature') %>
+
+# Disables automatic checking for security bulletins and new version releases
+disable_update_check = <%= p('nomad_agent.disable_update_check') %>
+
+# Enables the debugging HTTP endpoints
+enable_debug = <%= p('nomad_agent.enable_debug') %>
+
+# Enables logging to syslog
+enable_syslog = <%= p('nomad_agent.enable_syslog') %>
+
+# The name of the local agent
+name = "<%= p('nomad_agent.name', "#{spec.index}.#{spec.job.name}.#{spec.deployment}") %>"
+
+# Enables gracefully leave when receiving the interrupt signal
+leave_on_interrupt = <%= p('nomad_agent.leave_on_interrupt') %>
+
+# Enables gracefully leave when receiving the terminate signal
+leave_on_terminate = <%= p('nomad_agent.leave_on_terminate') %>
+
+# The verbosity level of Nomad's logs
+log_level = "<%= p('nomad_agent.log_level') %>"
+
+# Name of the region the Nomad agent will be a member of
+region = "<%= p('nomad_agent.region') %>"
+
+# Controls the syslog facility that is used
+syslog_facility = "<%= p('nomad_agent.syslog_facility') %>"
+
+addresses {
+  <% if_p('nomad_agent.addresses.http') do |addresses_http| %>
+  # The address the HTTP server is bound to
+  http = "<%= addresses_http %>"
+  <% end %>
+
+  <% if_p('nomad_agent.addresses.rpc') do |addresses_rpc| %>
+  # The address to bind the internal RPC interfaces to
+  rpc = "<%= addresses_rpc %>"
+  <% end %>
+
+  <% if_p('nomad_agent.addresses.serf') do |addresses_serf| %>
+  # The address used to bind the gossip layer to
+  serf = "<%= addresses_serf %>"
+  <% end %>
+}
+
+advertise {
+  <%
+  def openstruct_to_hash(os)
+    os.marshal_dump.map do |key, element|
+      element.is_a?(OpenStruct) ? { key => openstruct_to_hash(element) } : { key => element }
+    end.reduce(&:merge)
+  end
+
+  networks = openstruct_to_hash(spec.networks)
+  default_network = networks.values.find { |net| net.has_key?(:default) }
+  private_ip = default_network[:ip]
+  %>
+
+  # The address to advertise for the RPC interface
+  rpc = "<%= p('nomad_agent.advertise.rpc', private_ip) %>:<%= p('nomad_agent.ports.rpc') %>"
+
+  # The address used advertise for the gossip layer
+  serf = "<%= p('nomad_agent.advertise.serf', private_ip) %>:<%= p('nomad_agent.ports.serf') %>"
+}
+
+<% if_p('nomad_agent.atlas.infrastructure', 'nomad_agent.atlas.token', 'nomad_agent.atlas.endpoint') do |atlas_infrastructure, atlas_token, atlas_endpoint| %>
+atlas {
+  # The Atlas infrastructure name to connect this agent to
+  infrastructure = "<%= atlas_infrastructure %>"
+
+  # The Atlas token to use for authentication
+  token = "<%= atlas_token %>"
+
+  # A boolean indicating if the auto-join feature of Atlas should be enabled
+  join = <%= p('nomad_agent.atlas.join') %>
+
+  # The address of the Atlas instance to connect to
+  endpoint = "<%= atlas_endpoint %>"
+}
+<% end %>
+
+<% if p('nomad_agent.mode') != 'server' %>
+client {
+  enabled = true
+
+  # An array of server addresses
+  servers = [<%= p('nomad_agent.servers').map { |server| "\"#{server}:#{p('nomad_agent.ports.rpc')}\"" }.join(',') %>]
+
+  <% if_p('nomad_agent.client.node_id') do |client_node_id| %>
+  # This is the value used to uniquely identify the local agent's node registration with the servers
+  node_id = "<%= client_node_id %>"
+  <% end %>
+
+  <% if_p('nomad_agent.client.node_class') do |client_node_class| %>
+  # A string used to logically group client nodes by class
+  node_class = "<%= node_class %>"
+  <% end %>
+
+  # This is a key/value mapping of metadata pairs
+  meta = <%= p('nomad_agent.client.meta') %>
+}
+<% end %>
+
+ports {
+  # The port used to run the HTTP server
+  http = <%= p('nomad_agent.ports.http') %>
+
+  # The port used for internal RPC communication between agents and servers
+  rpc = <%= p('nomad_agent.ports.rpc') %>
+
+  # The port used for the gossip protocol for cluster membership
+  serf = <%= p('nomad_agent.ports.serf') %>
+}
+
+<% if p('nomad_agent.mode') == 'server' %>
+server {
+  enabled = true
+
+  # Configures the expected number of servers nodes to wait for before bootstrapping the cluster
+  bootstrap_expect = <%= p('nomad_agent.server.bootstrap_expect') %>
+
+  # The number of parallel scheduler threads to run
+  num_schedulers = <%= p('nomad_agent.server.num_schedulers') %>
+
+  # This is an array of strings indicating which sub-schedulers this server will handle
+  enabled_schedulers = <%= p('nomad_agent.server.enabled_schedulers') %>
+}
+<% end %>
+
+telemetry {
+  <% if_p('nomad_agent.telemetry.statsite_address') do |statsite_address| %>
+  # Address of a statsite server to forward metrics data to
+  statsite_address = <%= statsite_address %>
+  <% end %>
+
+  <% if_p('nomad_agent.telemetry.statsd_address') do |statsd_address| %>
+  # Address of a statsd server to forward metrics to
+  statsd_address = <%= statsd_address %>
+  <% end %>
+
+  # A boolean indicating if gauge values should not be prefixed with the local hostname
+  disable_hostname = <%= p('nomad_agent.telemetry.disable_hostname') %>
+}
